@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Will You Be My Valentine?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    h1 {
+      color: #e91e63;
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+
+    .buttons {
+      position: relative;
+      height: 80px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+
+    #yesBtn {
+      background: #e91e63;
+      color: white;
+      margin-right: 10px;
+    }
+
+    #noBtn {
+      background: #ddd;
+      color: #555;
+    }
+
+    #noBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    .popup-content button {
+      background: #e91e63;
+      color: white;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" id="card">
+    <h1 id="question">Will you be my Valentine? 💘</h1>
+
+    <div class="buttons" id="buttonArea">
+      <button id="yesBtn">Yes 💖</button>
+      <button id="noBtn">No 🙈</button>
+    </div>
+  </div>
+
+  <!-- Popup -->
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <p>Just kidding 😌<br>You have only one option!</p>
+      <button onclick="closePopup()">Okay 😄</button>
+    </div>
+  </div>
+
+  <script>
+    // Custom name
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name");
+    if (name) {
+      document.getElementById("question").innerHTML =
+        `${name}, will you be my Valentine? 💘`;
+    }
+
+    const noBtn = document.getElementById("noBtn");
+    const area = document.getElementById("buttonArea");
+    const popup = document.getElementById("popup");
+
+    let initialized = false;
+
+    function moveNoButton() {
+      if (noBtn.disabled) return;
+
+      // Lock position only once (first interaction)
+      if (!initialized) {
+        const rect = noBtn.getBoundingClientRect();
+        const parentRect = area.getBoundingClientRect();
+
+        noBtn.style.position = "absolute";
+        noBtn.style.left = `${rect.left - parentRect.left}px`;
+        noBtn.style.top = `${rect.top - parentRect.top}px`;
+
+        initialized = true;
+      }
+
+      const areaRect = area.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const maxX = areaRect.width - btnRect.width;
+      const maxY = areaRect.height - btnRect.height;
+
+      const randomX = Math.random() * maxX;
+      const randomY = Math.random() * maxY;
+
+      noBtn.style.left = `${randomX}px`;
+      noBtn.style.top = `${randomY}px`;
+    }
+
+    // Desktop
+    noBtn.addEventListener("mouseenter", moveNoButton);
+
+    // Mobile
+    noBtn.addEventListener("touchstart", moveNoButton);
+
+    // If clicked
+    noBtn.addEventListener("click", () => {
+      popup.style.display = "flex";
+      noBtn.disabled = true;
+    });
+
+    function closePopup() {
+      popup.style.display = "none";
+    }
+
+    // YES = download PDF
+    document.getElementById("yesBtn").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.href = "valentine.pdf";
+      link.download = "valentine.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  </script>
+
+</body>
+</html>

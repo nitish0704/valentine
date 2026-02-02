@@ -36,7 +36,7 @@
 
     .buttons {
       position: relative;
-      height: 80px;
+      height: 120px;
     }
 
     button {
@@ -45,23 +45,23 @@
       border-radius: 25px;
       border: none;
       cursor: pointer;
-      transition: 0.25s ease;
+      transition: transform 0.15s ease;
+      touch-action: manipulation;
     }
 
     #yesBtn {
       background: #e91e63;
       color: white;
-      margin-right: 10px;
+      position: relative;
+      z-index: 2;
     }
 
     #noBtn {
       background: #ddd;
       color: #555;
-    }
-
-    #noBtn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      position: relative;
+      z-index: 1;
+      user-select: none;
     }
 
     .popup {
@@ -92,16 +92,15 @@
 
 <body>
 
-  <div class="card" id="card">
+  <div class="card">
     <h1 id="question">Will you be my Valentine? 💘</h1>
 
-    <div class="buttons" id="buttonArea">
+    <div class="buttons" id="area">
       <button id="yesBtn">Yes 💖</button>
       <button id="noBtn">No 🙈</button>
     </div>
   </div>
 
-  <!-- Popup -->
   <div class="popup" id="popup">
     <div class="popup-content">
       <p>Just kidding 😌<br>You have only one option!</p>
@@ -110,72 +109,95 @@
   </div>
 
   <script>
-    // Custom name
-    const params = new URLSearchParams(window.location.search);
+    // Name from URL
+    const params = new URLSearchParams(location.search);
     const name = params.get("name");
     if (name) {
-      document.getElementById("question").innerHTML =
+      document.getElementById("question").innerText =
         `${name}, will you be my Valentine? 💘`;
     }
 
     const noBtn = document.getElementById("noBtn");
-    const area = document.getElementById("buttonArea");
+    const yesBtn = document.getElementById("yesBtn");
+    const area = document.getElementById("area");
     const popup = document.getElementById("popup");
 
     let initialized = false;
+    let lastX = 0, lastY = 0;
 
-    function moveNoButton() {
-      if (noBtn.disabled) return;
+    function initAbsolutePosition() {
+      const btnRect = noBtn.getBoundingClientRect();
+      const areaRect = area.getBoundingClientRect();
 
-      // Lock position only once (first interaction)
-      if (!initialized) {
-        const rect = noBtn.getBoundingClientRect();
-        const parentRect = area.getBoundingClientRect();
+      noBtn.style.position = "absolute";
+      noBtn.style.left = `${btnRect.left - areaRect.left}px`;
+      noBtn.style.top = `${btnRect.top - areaRect.top}px`;
 
-        noBtn.style.position = "absolute";
-        noBtn.style.left = `${rect.left - parentRect.left}px`;
-        noBtn.style.top = `${rect.top - parentRect.top}px`;
+      lastX = btnRect.left;
+      lastY = btnRect.top;
+      initialized = true;
+    }
 
-        initialized = true;
-      }
+    function moveNoButton(e) {
+      e.preventDefault(); // 🚫 stops mobile click
+
+      if (!initialized) initAbsolutePosition();
 
       const areaRect = area.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
 
-      const maxX = areaRect.width - btnRect.width;
-      const maxY = areaRect.height - btnRect.height;
+      let x, y, tries = 0;
 
-      const randomX = Math.random() * maxX;
-      const randomY = Math.random() * maxY;
+      do {
+        x = Math.random() * (areaRect.width - btnRect.width);
+        y = Math.random() * (areaRect.height - btnRect.height);
 
-      noBtn.style.left = `${randomX}px`;
-      noBtn.style.top = `${randomY}px`;
+        const dx = Math.abs(x + areaRect.left - lastX);
+        const dy = Math.abs(y + areaRect.top - lastY);
+        const farEnough = dx + dy > 80;
+
+        const overlapsYes =
+          x + btnRect.width > yesRect.left - areaRect.left &&
+          x < yesRect.right - areaRect.left &&
+          y + btnRect.height > yesRect.top - areaRect.top &&
+          y < yesRect.bottom - areaRect.top;
+
+        if (farEnough && !overlapsYes) break;
+
+        tries++;
+      } while (tries < 10);
+
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
+
+      lastX = x + areaRect.left;
+      lastY = y + areaRect.top;
     }
 
     // Desktop
     noBtn.addEventListener("mouseenter", moveNoButton);
 
-    // Mobile
-    noBtn.addEventListener("touchstart", moveNoButton);
+    // Mobile (NO CLICK POSSIBLE)
+    noBtn.addEventListener("touchstart", moveNoButton, { passive: false });
 
-    // If clicked
-    noBtn.addEventListener("click", () => {
+    // Safety: if somehow clicked
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       popup.style.display = "flex";
-      noBtn.disabled = true;
     });
 
     function closePopup() {
       popup.style.display = "none";
     }
 
-    // YES = download PDF
-    document.getElementById("yesBtn").addEventListener("click", () => {
-      const link = document.createElement("a");
-      link.href = "valentine.pdf";
-      link.download = "valentine.pdf";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    yesBtn.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = "valentine.pdf";
+      a.download = "Be_My_Valentine.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     });
   </script>
 
